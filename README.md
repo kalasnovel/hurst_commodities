@@ -73,9 +73,12 @@ Todos os arquivos são salvos em `./outputs/`:
 | Arquivo | Conteúdo |
 |---|---|
 | `tabela1_estatisticas_descritivas.csv` | N, média, desvio-padrão, assimetria, curtose, Jarque-Bera, ADF por commodity |
-| `tabela2_hurst_global.csv` | H_RS e H_DFA com IC 95% (bootstrap em bloco) e classificação de regime |
+| `tabela2_hurst_global.csv` | H_RS, H_DFA com IC 95% (bootstrap em bloco), regime e teste de Lo (Vq) |
 | `tabela3_comparacao_estimadores.csv` | Discrepância absoluta entre H_RS e H_DFA por commodity |
-| `tabela4_rolling_hurst.csv` | Série temporal de H rolling (DFA, janela 60 meses) por commodity |
+| `tabela4_sensibilidade_bloco.csv` | IC 95% do H_DFA para três tamanhos de bloco (b=4, b=7, b=19) |
+| `tabela5_rolling_60m.csv` | H rolling (DFA, janela 60 meses) por commodity |
+| `tabela6_rolling_84m.csv` | H rolling (DFA, janela 84 meses) por commodity |
+| `tabela7_rolling_120m.csv` | H rolling (DFA, janela 120 meses) por commodity |
 | `fig1_acf.png` | ACF dos retornos logarítmicos mensais (lags 1–24) |
 | `fig2_loglog_rs.png` | Log-log plot R/S por commodity — inclinação = H_RS |
 | `fig3_hurst_barras.png` | H global (DFA) com barras de erro IC 95% |
@@ -93,16 +96,19 @@ Definidos em `config.py`:
 | `JANELA_ROLL` | 60 meses | Janela deslizante para H rolling |
 | `MIN_OBS_HURST` | 32 | Mínimo de observações para estimação confiável do R/S |
 | `N_BOOT` | 500 | Amostras de bootstrap em bloco (Künsch, 1989) |
+| `SEED` | 42 | Semente fixa para reprodutibilidade — garante que tabelas, figuras e texto referenciem os mesmos valores |
 
 ---
 
 ## Notas metodológicas
 
-**R/S vs DFA:** O DFA é o estimador principal por ser robusto à não-estacionariedade. O R/S clássico não controla autocorrelações de curto prazo e pode inflar H. A `tabela3_comparacao_estimadores.csv` quantifica essa discrepância — valores acima de 0,10 devem ser adicionados como limitações.
+**R/S vs DFA:** O DFA é o estimador principal por ser robusto à não-estacionariedade. O R/S clássico não controla autocorrelações de curto prazo e pode inflar H. A `tabela3_comparacao_estimadores.csv` quantifica essa discrepância — valores acima de 0,10 devem ser analisados como limitações.
 
 **Retornos, não preços:** R/S e DFA são aplicados sobre retornos logarítmicos mensais. Retornos são estacionários em primeiro momento, condição relevante para a validade do R/S.
 
-**Bootstrap em bloco:** O tamanho do bloco segue a regra b = ⌊N^(1/3)⌋, mínimo 4, conforme Künsch (1989). Os IC 95% são construídos pelo método percentil com 500 amostras.
+**Bootstrap em bloco:** O tamanho do bloco segue a regra b = ⌊N^(1/3)⌋, mínimo 4, conforme Künsch (1989). Os IC 95% são construídos pelo método percentil com 500 amostras. A sensibilidade ao tamanho do bloco é avaliada com b = ⌊N^(1/4)⌋ e b = ⌊N^(1/2)⌋ (`tabela4_sensibilidade_bloco.csv`).
+
+**R/S Modificado de Lo (1991):** Implementado em `estimators/lo_rs.py` como teste de robustez formal contra a hipótese nula de ausência de memória longa — não como estimador alternativo de H. A estatística Vq segue distribuição assintótica conhecida; H₀ não é rejeitada se Vq ∈ [0,809; 1,862] ao nível de 5%.
 
 ---
 
@@ -111,3 +117,4 @@ Definidos em `config.py`:
 - Hurst, H. E. (1951). Long-term storage capacity of reservoirs. *Transactions of the American Society of Civil Engineers*, 116, 770–799.
 - Peng, C.-K. et al. (1994). Mosaic organization of DNA nucleotides. *Physical Review E*, 49(2), 1685–1689.
 - Künsch, H. R. (1989). The jackknife and the bootstrap for general stationary observations. *The Annals of Statistics*, 17(3), 1217–1241.
+- Lo, A. W. (1991). Long-term memory in stock market prices. *Econometrica*, 59(5), 1279–1313.
